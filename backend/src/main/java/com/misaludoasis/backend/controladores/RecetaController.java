@@ -21,12 +21,6 @@ public class RecetaController {
     private PacienteRepository pacienteRepository;
     @Autowired
     private MedicoRepository medicoRepository;
-    
-    // NUEVOS REPOSITORIOS
-    @Autowired
-    private MedicamentoRepository medicamentoRepository;
-    @Autowired
-    private HorarioMedicamentoRepository horarioRepository;
 
     @GetMapping("/paciente/{pacienteId}")
     public List<Receta> verRecetasPaciente(@PathVariable Long pacienteId) {
@@ -56,38 +50,26 @@ public class RecetaController {
             receta.setMedico(medico);
             receta.setFechaReceta(LocalDate.now());
             receta.setNotas((String) body.get("notas"));
+            receta.setDiagnostico((String) body.get("diagnostico")); // NUEVO
+            
+            if(body.get("edad") != null) receta.setEdad(Integer.parseInt(body.get("edad").toString()));
+            if(body.get("peso") != null) receta.setPeso((String) body.get("peso"));
+            if(body.get("altura") != null) receta.setAltura((String) body.get("altura"));
 
             List<Map<String, String>> detallesJson = (List<Map<String, String>>) body.get("detalles");
             List<RecetaDetalle> detalles = new ArrayList<>();
 
             if (detallesJson != null) {
                 for (Map<String, String> d : detallesJson) {
-                    // 1. Guardar el detalle de la receta (Para el documento)
                     RecetaDetalle detalle = new RecetaDetalle();
                     detalle.setReceta(receta);
                     detalle.setNombreMedicamento(d.get("nombreMedicamento"));
                     detalle.setDosis(d.get("dosis"));
                     detalle.setFrecuencia(d.get("frecuencia"));
                     detalle.setDuracion(d.get("duracion"));
+                    detalle.setViaAdministracion(d.get("viaAdministracion")); // NUEVO
+                    detalle.setCantidad(d.get("cantidad")); // NUEVO
                     detalles.add(detalle);
-
-                    // 2. MAGIA: Crear el medicamento para los recordatorios del paciente
-                    Medicamento med = new Medicamento();
-                    med.setPaciente(paciente);
-                    med.setNombre(d.get("nombreMedicamento"));
-                    med.setDosis(d.get("dosis"));
-                    med.setFrecuencia(d.get("frecuencia"));
-                    med.setFechaInicio(LocalDate.now());
-                    med.setFechaFin(LocalDate.now().plusMonths(1)); // Le damos 1 mes por defecto
-                    med.setEstado("activo");
-                    
-                    Medicamento medGuardado = medicamentoRepository.save(med);
-
-                    // 3. Crear un horario por defecto (08:00 AM)
-                    HorarioMedicamento horario = new HorarioMedicamento();
-                    horario.setMedicamento(medGuardado);
-                    horario.setHoraDia("08:00"); // Hora por defecto
-                    horarioRepository.save(horario);
                 }
             }
             receta.setDetalles(detalles);

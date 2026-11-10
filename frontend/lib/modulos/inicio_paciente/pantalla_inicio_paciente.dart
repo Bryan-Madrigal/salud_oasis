@@ -83,47 +83,42 @@ class _EstadoPantallaInicioPaciente extends State<PantallaInicioPaciente> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        leading: ancho ? null : Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Color(0xFF0F172A)),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         title: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            Icon(Icons.favorite, color: Colors.teal.shade400, size: 24),
+            Image.asset('assets/logo.png', width: 28, height: 28),
             const SizedBox(width: 8),
             Text(
               'Mi Salud Oasis',
-              style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold, fontSize: 20),
+              style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: Stack(
-              children: [
-                const Icon(Icons.notifications_outlined, color: Colors.black87),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                  ),
-                )
-              ],
-            ),
+            icon: const Icon(Icons.notifications_none, color: Color(0xFF0F172A)),
             onPressed: _abrirNotificaciones,
           ),
-          if (ancho) IconButton(icon: const Icon(Icons.settings_outlined), onPressed: _abrirConfiguracion),
         ],
       ),
       body: SafeArea(
         child: IndexedStack(
           index: _indiceSeleccionado,
-          children: const [
-            _PestanaInicioPacienteNuevo(),
-            PantallaExpedientePaciente(),
-            PantallaSeguimiento(),
-            PantallaMedicamentos(),
-            PantallaRecetasPaciente(),
-            PantallaCitasPaciente(),
+          children: [
+            _PestanaInicioPacienteNuevo(
+              onCambiarPestana: (index) => setState(() => _indiceSeleccionado = index),
+            ),
+            const PantallaExpedientePaciente(),
+            const PantallaSeguimiento(),
+            const PantallaMedicamentos(),
+            const PantallaRecetasPaciente(),
+            const PantallaCitasPaciente(),
           ],
         ),
       ),
@@ -236,7 +231,9 @@ class _ItemMenuLateral extends StatelessWidget {
 
 // ============ NUEVO DASHBOARD DEL PACIENTE ============
 class _PestanaInicioPacienteNuevo extends StatefulWidget {
-  const _PestanaInicioPacienteNuevo();
+  final Function(int) onCambiarPestana;
+
+  const _PestanaInicioPacienteNuevo({required this.onCambiarPestana});
 
   @override
   State<_PestanaInicioPacienteNuevo> createState() => _EstadoPestanaInicioPacienteNuevo();
@@ -246,6 +243,7 @@ class _EstadoPestanaInicioPacienteNuevo extends State<_PestanaInicioPacienteNuev
   List<RegistroSeguimiento> _seguimiento = [];
   List<dynamic> _citas = [];
   List<dynamic> _medicamentos = [];
+  dynamic _pacienteData;
   bool _cargando = true;
 
   @override
@@ -259,12 +257,14 @@ class _EstadoPestanaInicioPacienteNuevo extends State<_PestanaInicioPacienteNuev
     final urlSeguimiento = Uri.parse('http://localhost:8080/api/seguimiento/paciente/$id');
     final urlCitas = Uri.parse('http://localhost:8080/api/citas/paciente/$id');
     final urlMedicamentos = Uri.parse('http://localhost:8080/api/medicamentos/paciente/$id');
+    final urlPaciente = Uri.parse('http://localhost:8080/api/pacientes/$id');
 
     try {
       final res = await Future.wait([
         http.get(urlSeguimiento),
         http.get(urlCitas),
         http.get(urlMedicamentos),
+        http.get(urlPaciente),
       ]);
 
       if (res[0].statusCode == 200) {
@@ -273,6 +273,7 @@ class _EstadoPestanaInicioPacienteNuevo extends State<_PestanaInicioPacienteNuev
       }
       if (res[1].statusCode == 200) _citas = jsonDecode(res[1].body);
       if (res[2].statusCode == 200) _medicamentos = jsonDecode(res[2].body);
+      if (res[3].statusCode == 200) _pacienteData = jsonDecode(res[3].body);
     } catch (e) {
       debugPrint("Error al cargar dashboard: $e");
     } finally {
@@ -280,13 +281,15 @@ class _EstadoPestanaInicioPacienteNuevo extends State<_PestanaInicioPacienteNuev
     }
   }
 
-  String _formatearFecha(DateTime date) {
-    final meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-    return '${date.day} de ${meses[date.month - 1]} de ${date.year}';
+  String _avatarPath() {
+    if (_pacienteData != null) {
+      final sexo = _pacienteData['sexo']?.toString().toLowerCase() ?? '';
+      if (sexo.contains('femenino')) return 'assets/avatar_mujer.png';
+    }
+    return 'assets/avatar_hombre.png';
   }
 
-  // Logica para obtener el ultimo registro de un tipo
-  RegistroSeguimiento? _ultimoRegistro(String tipo) {
+  RegistroSeguimiento? _ultimoDeTipo(String tipo) {
     try {
       return _seguimiento.firstWhere((r) => r.tipo == tipo);
     } catch (_) {
@@ -294,7 +297,6 @@ class _EstadoPestanaInicioPacienteNuevo extends State<_PestanaInicioPacienteNuev
     }
   }
 
-  // Logica para proxima cita
   dynamic _proximaCita() {
     final ahora = DateTime.now();
     try {
@@ -307,7 +309,6 @@ class _EstadoPestanaInicioPacienteNuevo extends State<_PestanaInicioPacienteNuev
     }
   }
 
-  // Logica para contar medicamentos pendientes hoy
   int _medicamentosPendientesHoy() {
     int pendientes = 0;
     final hoy = DateTime.now();
@@ -335,9 +336,10 @@ class _EstadoPestanaInicioPacienteNuevo extends State<_PestanaInicioPacienteNuev
   Widget build(BuildContext context) {
     if (_cargando) return const Center(child: CircularProgressIndicator());
 
-    final glucosa = _ultimoRegistro('glucosa');
-    final presion = _ultimoRegistro('presion');
-    final peso = _ultimoRegistro('peso');
+    final glucosa = _ultimoDeTipo('glucosa');
+    final presion = _ultimoDeTipo('presion');
+    final peso = _ultimoDeTipo('peso');
+    final temperatura = _ultimoDeTipo('temperatura');
     final cita = _proximaCita();
     final medsPendientes = _medicamentosPendientesHoy();
 
@@ -349,215 +351,150 @@ class _EstadoPestanaInicioPacienteNuevo extends State<_PestanaInicioPacienteNuev
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. HERO CARD
+            // 1. TARJETA DE BIENVENIDA
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFE0F2FE),
-                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFE0F2FE), Color(0xFFF0F9FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.blue.withValues(alpha: 0.1)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
               ),
-              child: Stack(
+              child: Row(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Hola,', style: TextStyle(fontSize: 18, color: Color(0xFF0369A1))),
-                      Text(
-                        RepositorioApp.instancia.nombrePacienteActual.split(' ').first,
-                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text('Tu salud es lo mas importante.\nEstamos contigo en cada paso.', style: TextStyle(fontSize: 14, color: Color(0xFF475569))),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.calendar_today, size: 14, color: Color(0xFF0369A1)),
-                            const SizedBox(width: 6),
-                            Text('Hoy es ${_formatearFecha(DateTime.now())}', style: const TextStyle(fontSize: 12, color: Color(0xFF0369A1), fontWeight: FontWeight.w600)),
-                          ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '¡Hola, ${RepositorioApp.instancia.nombrePacienteActual.split(' ').first}!', 
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))
                         ),
-                      )
-                    ],
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Nos alegra tenerte de vuelta.', 
+                          style: TextStyle(fontSize: 14, color: Color(0xFF475569), fontWeight: FontWeight.w600)
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Revisa tu salud y manten al dia tu tratamiento.', 
+                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B))
+                        ),
+                      ],
+                    ),
                   ),
-                  // Simulacion de ilustracion
-                  Positioned(
-                    right: -10, bottom: -10,
-                    child: Icon(Icons.person, size: 120, color: Colors.blue.shade300.withValues(alpha: 0.4)),
-                  ),
+                  const SizedBox(width: 16),
+                  Container(
+                    width: 90,
+                    height: 110,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 4))
+                      ],
+                      image: DecorationImage(
+                        image: AssetImage(_avatarPath()),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    child: Image.asset(
+                      _avatarPath(),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Center(
+                          child: Icon(Icons.person, size: 50, color: Colors.grey),
+                        );
+                      },
+                    ),
+                  )
                 ],
               ),
             ),
             const SizedBox(height: 24),
 
             // 2. RESUMEN DE SALUD
-            const Text('Resumen de salud', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-            const SizedBox(height: 12),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _TarjetaResumen(
-                    titulo: 'Glucosa',
-                    valor: glucosa != null ? '${glucosa.valor} ${glucosa.unidad}' : '--',
-                    icono: Icons.water_drop,
-                    colorIcono: Colors.purple,
-                    colorFondo: const Color(0xFFF3E8FF),
-                    estado: glucosa != null ? 'En rango' : 'Sin datos',
-                  ),
-                  const SizedBox(width: 12),
-                  _TarjetaResumen(
-                    titulo: 'Presion arterial',
-                    valor: presion != null ? '${presion.valor} ${presion.unidad}' : '--',
-                    icono: Icons.favorite,
-                    colorIcono: Colors.red,
-                    colorFondo: const Color(0xFFFEE2E2),
-                    estado: presion != null ? 'Normal' : 'Sin datos',
-                  ),
-                  const SizedBox(width: 12),
-                  _TarjetaResumen(
-                    titulo: 'Peso',
-                    valor: peso != null ? '${peso.valor} ${peso.unidad}' : '--',
-                    icono: Icons.monitor_weight,
-                    colorIcono: Colors.green,
-                    colorFondo: const Color(0xFFDCFCE7),
-                    estado: peso != null ? 'Normal' : 'Sin datos',
-                  ),
-                  const SizedBox(width: 12),
-                  _TarjetaResumen(
-                    titulo: 'Actividad',
-                    valor: '0 pasos',
-                    icono: Icons.directions_run,
-                    colorIcono: Colors.blue,
-                    colorFondo: const Color(0xFFDBEAFE),
-                    estado: 'Hoy',
-                  ),
-                ],
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Tu resumen de salud', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                TextButton(
+                  onPressed: () => widget.onCambiarPestana(2),
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0,0)),
+                  child: const Text('Ver seguimiento ->', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0284C7))),
+                )
+              ],
             ),
-            const SizedBox(height: 24),
-
-            // 3. PROXIMA CITA
-            if (cita != null) ...[
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: const BoxDecoration(color: Color(0xFFE0F2FE), shape: BoxShape.circle),
-                      child: const Icon(Icons.calendar_month, color: Colors.blue),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('PROXIMA CITA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue, letterSpacing: 1)),
-                          const SizedBox(height: 4),
-                          Text(cita['motivo'] ?? 'Consulta general', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                          Text(cita['medico']?['usuario']?['nombre'] ?? 'Medico asignado', style: const TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.calendar_today, size: 12, color: Color(0xFF64748B)),
-                              const SizedBox(width: 4),
-                              Text(cita['fechaHoraConfirmada'].toString().substring(0, 10), style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                              const SizedBox(width: 12),
-                              const Icon(Icons.access_time, size: 12, color: Color(0xFF64748B)),
-                              const SizedBox(width: 4),
-                              Text(cita['fechaHoraConfirmada'].toString().substring(11, 16), style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right, color: Colors.blue),
-                      onPressed: () {},
-                    )
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-
-            // 4. TU TRATAMIENTO
-            const Text('Tu tratamiento', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: const BoxDecoration(color: Color(0xFFDCFCE7), shape: BoxShape.circle),
-                    child: const Icon(Icons.medication, color: Colors.green),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Medicamentos', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                        Text('Tienes $medsPendientes medicamentos pendientes hoy', style: const TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right, color: Colors.grey),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
 
-            // 5. TU PROGRESO
-            const Text('Tu progreso', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF3E8FF),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: const BoxDecoration(color: Color(0xFFE9D5FF), shape: BoxShape.circle),
-                    child: const Icon(Icons.bar_chart, color: Colors.purple),
-                  ),
-                  const SizedBox(width: 16),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Evolucion de tus indicadores', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                        Text('Revisa como van tus resultados', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                      ],
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text('Ver grafico', style: TextStyle(color: Colors.purple)),
-                  )
-                ],
-              ),
+            // Cuadricula 2x2
+            Row(
+              children: [
+                Expanded(child: _TarjetaMetricaGrid(titulo: 'Glucosa', valor: glucosa != null ? '${glucosa.valor} ${glucosa.unidad}' : '--', icono: Icons.water_drop_outlined, colorIcono: Colors.purple)),
+                const SizedBox(width: 16),
+                Expanded(child: _TarjetaMetricaGrid(titulo: 'Presión arterial', valor: presion != null ? '${presion.valor} ${presion.unidad}' : '--', icono: Icons.favorite_border, colorIcono: Colors.red)),
+              ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: _TarjetaMetricaGrid(titulo: 'Peso', valor: peso != null ? '${peso.valor} ${peso.unidad}' : '--', icono: Icons.monitor_weight_outlined, colorIcono: Colors.green)),
+                const SizedBox(width: 16),
+                Expanded(child: _TarjetaMetricaGrid(titulo: 'Temperatura', valor: temperatura != null ? '${temperatura.valor} ${temperatura.unidad}' : '--', icono: Icons.thermostat_outlined, colorIcono: Colors.orange)),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            // 3. LO QUE TIENES PARA HOY
+            const Text('Lo que tienes para hoy', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            const SizedBox(height: 12),
+
+            _TarjetaAccionHoy(
+              icono: Icons.medication,
+              colorIcono: Colors.blue,
+              titulo: 'Medicamentos',
+              subtitulo: 'Tienes tomas programadas para hoy.',
+              badgeTexto: medsPendientes > 0 ? '$medsPendientes pendientes' : 'Completado',
+              colorBadge: medsPendientes > 0 ? Colors.orange : Colors.green,
+              textoBoton: 'Consultar tratamiento',
+              alPresionar: () => widget.onCambiarPestana(3),
+            ),
+            const SizedBox(height: 12),
+
+            if (cita != null)
+              _TarjetaAccionHoy(
+                icono: Icons.calendar_month,
+                colorIcono: Colors.green,
+                titulo: 'Próxima cita',
+                subtitulo: 'Consulta medica con ${cita['medico']?['usuario']?['nombre'] ?? 'Medico'}.',
+                badgeTexto: 'Programada',
+                colorBadge: Colors.blue,
+                textoBoton: 'Ver detalles',
+                alPresionar: () => widget.onCambiarPestana(5),
+              )
+            else
+              _TarjetaAccionHoy(
+                icono: Icons.calendar_month,
+                colorIcono: Colors.grey,
+                titulo: 'Próxima cita',
+                subtitulo: 'No tienes citas programadas por el momento.',
+                badgeTexto: 'Sin citas',
+                colorBadge: Colors.grey,
+                textoBoton: 'Agendar cita',
+                alPresionar: () => widget.onCambiarPestana(5),
+              ),
+            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -565,27 +502,19 @@ class _EstadoPestanaInicioPacienteNuevo extends State<_PestanaInicioPacienteNuev
   }
 }
 
-class _TarjetaResumen extends StatelessWidget {
+// ================= WIDGETS AUXILIARES =================
+
+class _TarjetaMetricaGrid extends StatelessWidget {
   final String titulo;
   final String valor;
   final IconData icono;
   final Color colorIcono;
-  final Color colorFondo;
-  final String estado;
 
-  const _TarjetaResumen({
-    required this.titulo,
-    required this.valor,
-    required this.icono,
-    required this.colorIcono,
-    required this.colorFondo,
-    required this.estado,
-  });
+  const _TarjetaMetricaGrid({required this.titulo, required this.valor, required this.icono, required this.colorIcono});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 140,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -595,20 +524,74 @@ class _TarjetaResumen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: colorFondo, shape: BoxShape.circle),
-            child: Icon(icono, color: colorIcono, size: 20),
-          ),
-          const SizedBox(height: 16),
+          Icon(icono, color: colorIcono, size: 24),
+          const SizedBox(height: 12),
           Text(titulo, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
           const SizedBox(height: 4),
-          Text(valor, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+          Text(valor, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: colorFondo, borderRadius: BorderRadius.circular(20)),
-            child: Text(estado, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colorIcono)),
+            decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(20)),
+            child: const Text('Último registro', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class _TarjetaAccionHoy extends StatelessWidget {
+  final IconData icono;
+  final Color colorIcono;
+  final String titulo;
+  final String subtitulo;
+  final String badgeTexto;
+  final Color colorBadge;
+  final String textoBoton;
+  final VoidCallback alPresionar;
+
+  const _TarjetaAccionHoy({
+    required this.icono, required this.colorIcono, required this.titulo, required this.subtitulo,
+    required this.badgeTexto, required this.colorBadge, required this.textoBoton, required this.alPresionar
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(icono, color: colorIcono, size: 20),
+                  const SizedBox(width: 8),
+                  Text(titulo, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(color: colorBadge.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                child: Text(badgeTexto, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colorBadge)),
+              )
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(subtitulo, style: const TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: alPresionar,
+            style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+            child: Text('$textoBoton ->', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0284C7))),
           )
         ],
       ),

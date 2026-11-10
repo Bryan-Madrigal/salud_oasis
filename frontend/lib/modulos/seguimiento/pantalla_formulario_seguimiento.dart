@@ -15,7 +15,6 @@ class PantallaFormularioSeguimiento extends StatefulWidget {
 
 class _EstadoPantallaFormularioSeguimiento extends State<PantallaFormularioSeguimiento> {
   late String _tipo;
-
   final _controladorValor = TextEditingController();
   final _controladorSistolica = TextEditingController();
   final _controladorDiastolica = TextEditingController();
@@ -24,24 +23,11 @@ class _EstadoPantallaFormularioSeguimiento extends State<PantallaFormularioSegui
   final _controladorObservaciones = TextEditingController();
 
   bool _cargando = false;
-  String? _momento;
-
-  static const _opcionesMomento = [
-    'En ayunas',
-    'Postprandial (despues de comer)',
-    'Antes de dormir',
-    'Aleatorio',
-  ];
 
   @override
   void initState() {
     super.initState();
     _tipo = widget.tipoInicial ?? 'glucosa';
-    
-    if (widget.tipoInicial == 'sintomas') {
-      _tipo = 'otro';
-      _controladorOtroNombre.text = 'Sintomas';
-    }
   }
 
   @override
@@ -61,33 +47,71 @@ class _EstadoPantallaFormularioSeguimiento extends State<PantallaFormularioSegui
       case 'presion': return 'mmHg';
       case 'peso': return 'kg';
       case 'frecuencia': return 'bpm';
-      case 'saturacion': return '%';
-      case 'respiratoria': return 'rpm';
+      case 'temperatura': return '°C';
       default: return '';
     }
   }
 
-  Map<String, String> get _datosHero {
+  String get _tituloMedicion {
     switch (_tipo) {
-      case 'glucosa': return {'titulo': 'Glucosa', 'desc': 'Manten un registro de tus niveles de glucosa para un mejor control.'};
-      case 'presion': return {'titulo': 'Presion', 'desc': 'Registra tu presion arterial para monitorear tu salud cardiovascular.'};
-      case 'peso': return {'titulo': 'Peso', 'desc': 'Lleva un control de tu peso corporal a lo largo del tiempo.'};
-      case 'frecuencia': return {'titulo': 'Frecuencia', 'desc': 'Monitorea tu frecuencia cardiaca en reposo.'};
-      case 'saturacion': return {'titulo': 'Saturacion', 'desc': 'Verifica tus niveles de oxigeno en sangre.'};
-      case 'respiratoria': return {'titulo': 'Respiratoria', 'desc': 'Registra tu frecuencia respiratoria.'};
-      default: return {'titulo': 'Medicion', 'desc': 'Registra tu medicion de salud.'};
+      case 'glucosa': return 'Glucosa';
+      case 'presion': return 'Presion';
+      case 'peso': return 'Peso';
+      case 'frecuencia': return 'Frecuencia Cardiaca';
+      case 'temperatura': return 'Temperatura';
+      default: return 'Medicion';
+    }
+  }
+
+  String get _descripcionMedicion {
+    switch (_tipo) {
+      case 'glucosa': return 'Registra tu nivel y lleva un seguimiento de tu salud.';
+      case 'presion': return 'Registra tu presion arterial para monitorear tu salud cardiovascular.';
+      case 'peso': return 'Lleva un control de tu peso corporal a lo largo del tiempo.';
+      case 'frecuencia': return 'Monitorea tu frecuencia cardiaca en reposo.';
+      case 'temperatura': return 'Verifica si tienes fiebre o hipotermia.';
+      default: return 'Registra tu medicion de salud.';
+    }
+  }
+
+  IconData get _iconoMedicion {
+    switch (_tipo) {
+      case 'glucosa': return Icons.water_drop_outlined;
+      case 'presion': return Icons.favorite_border;
+      case 'peso': return Icons.monitor_weight_outlined;
+      case 'frecuencia': return Icons.monitor_heart_outlined;
+      case 'temperatura': return Icons.thermostat_outlined;
+      default: return Icons.health_and_safety_outlined;
+    }
+  }
+
+  Color get _colorPrincipal {
+    switch (_tipo) {
+      case 'glucosa': return const Color(0xFF0284C7);
+      case 'presion': return const Color(0xFFE11D48);
+      case 'peso': return const Color(0xFF16A34A);
+      case 'frecuencia': return const Color(0xFFD97706);
+      case 'temperatura': return const Color(0xFFB91C1C);
+      default: return const Color(0xFF64748B);
+    }
+  }
+
+  Color get _colorFondoHero {
+    switch (_tipo) {
+      case 'glucosa': return const Color(0xFFE0F2FE);
+      case 'presion': return const Color(0xFFFFE4E6);
+      case 'peso': return const Color(0xFFDCFCE7);
+      case 'frecuencia': return const Color(0xFFFEF3C7);
+      case 'temperatura': return const Color(0xFFFEE2E2);
+      default: return const Color(0xFFF1F5F9);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final esPreseleccionado = widget.tipoInicial != null;
-    
     const colorFondo = Color(0xFFF8FAFC);
-    const colorHeroBg = Color(0xFFE0F2FE);
     const colorTextoOscuro = Color(0xFF0F172A);
     const colorTextoClaro = Color(0xFF64748B);
-    const colorPrimario = Color(0xFF0284C7);
 
     return Scaffold(
       backgroundColor: colorFondo,
@@ -98,36 +122,7 @@ class _EstadoPantallaFormularioSeguimiento extends State<PantallaFormularioSegui
           icon: const Icon(Icons.arrow_back, color: colorTextoOscuro),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.favorite, color: Colors.teal.shade400, size: 24),
-            const SizedBox(width: 8),
-            const Text(
-              'Mi Salud Oasis',
-              style: TextStyle(color: colorTextoOscuro, fontWeight: FontWeight.bold, fontSize: 20),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: Stack(
-              children: [
-                const Icon(Icons.notifications_outlined, color: colorTextoOscuro),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                  ),
-                )
-              ],
-            ),
-            onPressed: () {},
-          ),
-        ],
+        title: const Text('Registrar medicion', style: TextStyle(color: colorTextoOscuro, fontSize: 18, fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -136,148 +131,116 @@ class _EstadoPantallaFormularioSeguimiento extends State<PantallaFormularioSegui
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (!esPreseleccionado) ...[
-                const Text('Que deseas registrar?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: colorTextoOscuro)),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _chipTipo('glucosa', 'Glucosa', Icons.water_drop_outlined),
-                    _chipTipo('presion', 'Presion', Icons.favorite_border),
-                    _chipTipo('peso', 'Peso', Icons.monitor_weight_outlined),
-                    _chipTipo('frecuencia', 'Frecuencia', Icons.monitor_heart_outlined),
-                    _chipTipo('saturacion', 'Sat. O2', Icons.air_outlined),
-                    _chipTipo('respiratoria', 'Frec. resp.', Icons.waves_outlined),
-                    _chipTipo('otro', 'Otro', Icons.health_and_safety_outlined),
-                  ],
-                ),
-                const SizedBox(height: 24),
-              ],
+              const Text('¿Que deseas registrar?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colorTextoOscuro)),
+              const SizedBox(height: 12),
+              
+              // CUADRICULA 3x2 PERO CON 5 BOTONES
+              Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: _BotonTipo(tipo: 'glucosa', etiqueta: 'Glucosa', icono: Icons.water_drop_outlined, actual: _tipo, alCambiar: _cambiarTipo)),
+                      const SizedBox(width: 8),
+                      Expanded(child: _BotonTipo(tipo: 'presion', etiqueta: 'Presion', icono: Icons.favorite_border, actual: _tipo, alCambiar: _cambiarTipo)),
+                      const SizedBox(width: 8),
+                      Expanded(child: _BotonTipo(tipo: 'peso', etiqueta: 'Peso', icono: Icons.monitor_weight_outlined, actual: _tipo, alCambiar: _cambiarTipo)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(child: _BotonTipo(tipo: 'frecuencia', etiqueta: 'Frecuencia', icono: Icons.monitor_heart_outlined, actual: _tipo, alCambiar: _cambiarTipo)),
+                      const SizedBox(width: 8),
+                      Expanded(child: _BotonTipo(tipo: 'temperatura', etiqueta: 'Temperatura', icono: Icons.thermostat_outlined, actual: _tipo, alCambiar: _cambiarTipo)),
+                      const SizedBox(width: 8),
+                      const Expanded(child: SizedBox()), // Espacio vacio para mantener el tamano
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
 
               // HERO CARD
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: colorHeroBg,
-                  borderRadius: BorderRadius.circular(24),
+                  color: _colorFondoHero,
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Stack(
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('REGISTRAR', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: colorPrimario)),
-                        Text(_datosHero['titulo']!, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: colorTextoOscuro)),
+                        Text('NUEVA MEDICION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: _colorPrincipal)),
+                        const SizedBox(height: 4),
+                        Text(_tituloMedicion, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: colorTextoOscuro)),
                         const SizedBox(height: 8),
                         SizedBox(
-                          width: 200,
-                          child: Text(_datosHero['desc']!, style: const TextStyle(fontSize: 14, color: colorTextoClaro, height: 1.4)),
+                          width: 220, 
+                          child: Text(_descripcionMedicion, style: const TextStyle(fontSize: 14, color: colorTextoClaro, height: 1.4)),
                         ),
                       ],
                     ),
                     Positioned(
-                      right: -10,
-                      bottom: -10,
-                      child: Icon(Icons.water_drop, size: 100, color: Colors.blue.shade300.withValues(alpha: 0.4)),
+                      right: -10, bottom: -10,
+                      child: Icon(_iconoMedicion, size: 90, color: _colorPrincipal.withValues(alpha: 0.2)),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
 
-              // TARJETA DE FORMULARIO BLANCA
+              // TARJETA DE RESULTADO
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 8)),
-                  ],
-                ),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))]),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_tipo == 'presion' ? 'Presion arterial' : 'Nivel de ${_datosHero['titulo']!.toLowerCase()}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colorTextoOscuro)),
+                    const Text('Resultado de la medicion', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colorTextoOscuro)),
                     const SizedBox(height: 12),
-                    
-                    if (_tipo == 'presion') 
-                      _construirCamposPresion()
-                    else if (_tipo == 'otro')
-                      _construirCamposOtros()
-                    else
-                      _construirInputPrincipal(colorPrimario),
-
-                    const SizedBox(height: 16),
-                    
-                    // Info Pill
+                    _construirInputUnico(colorTextoClaro),
+                    const SizedBox(height: 12),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: colorHeroBg,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(color: _colorFondoHero, borderRadius: BorderRadius.circular(8)),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.info_outline, size: 16, color: colorPrimario),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Tu rango configurado: ${RangosMedicion.textoReferencia(_tipo)}',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: colorPrimario),
-                          ),
+                          Icon(Icons.info_outline, size: 14, color: _colorPrincipal),
+                          const SizedBox(width: 6),
+                          Text(RangosMedicion.textoReferencia(_tipo), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: _colorPrincipal)),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
 
-                    // Momento de la medicion (solo si es glucosa)
-                    if (_tipo == 'glucosa') ...[
-                      const Text('Momento de la medicion', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colorTextoOscuro)),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: _momento,
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          hintText: 'Selecciona una opcion',
-                          hintStyle: const TextStyle(color: colorTextoClaro),
-                          prefixIcon: const Icon(Icons.access_time, color: colorTextoClaro),
-                          filled: true,
-                          fillColor: colorFondo,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade200)),
-                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: colorPrimario)),
-                        ),
-                        icon: const Icon(Icons.keyboard_arrow_down, color: colorTextoClaro),
-                        items: _opcionesMomento.map((m) => DropdownMenuItem<String>(value: m, child: Text(m))).toList(),
-                        onChanged: (v) => setState(() => _momento = v),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-
-                    // Observaciones
-                    const Text('Observaciones (opcional)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colorTextoOscuro)),
+              // TARJETA DE NOTAS
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))]),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Notas adicionales (opcional)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colorTextoOscuro)),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _controladorObservaciones,
-                      maxLines: 4,
-                      maxLength: 200,
+                      maxLines: 3,
                       decoration: InputDecoration(
-                        hintText: 'Ej. Me senti bien...',
-                        hintStyle: const TextStyle(color: colorTextoClaro),
-                        prefixIcon: const Padding(
-                          padding: EdgeInsets.only(bottom: 60),
-                          child: Icon(Icons.chat_bubble_outline, color: colorTextoClaro),
-                        ),
+                        hintText: '¿Como te sentias durante la medicion?',
+                        hintStyle: const TextStyle(color: colorTextoClaro, fontSize: 14),
                         filled: true,
                         fillColor: colorFondo,
                         contentPadding: const EdgeInsets.all(16),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade200)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: colorPrimario)),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _colorPrincipal)),
                       ),
                     ),
                   ],
@@ -291,31 +254,12 @@ class _EstadoPantallaFormularioSeguimiento extends State<PantallaFormularioSegui
                 height: 56,
                 child: FilledButton.icon(
                   onPressed: _cargando ? null : _guardar,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: colorPrimario,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  icon: _cargando 
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Icon(Icons.check_circle_outline, color: Colors.white),
+                  style: FilledButton.styleFrom(backgroundColor: _colorPrincipal, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                  icon: _cargando ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.check_circle_outline, color: Colors.white),
                   label: Text(_cargando ? 'Guardando...' : 'Guardar medicion', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ),
-              const SizedBox(height: 40),
-
-              // Decoracion inferior (olas)
-              Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(width: 40, height: 2, color: Colors.grey.shade300),
-                    const SizedBox(width: 8),
-                    Icon(Icons.favorite, color: Colors.teal.shade200, size: 16),
-                    const SizedBox(width: 8),
-                    Container(width: 40, height: 2, color: Colors.grey.shade300),
-                  ],
-                ),
-              )
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -323,193 +267,52 @@ class _EstadoPantallaFormularioSeguimiento extends State<PantallaFormularioSegui
     );
   }
 
-  Widget _chipTipo(String tipo, String etiqueta, IconData icono) {
-    final seleccionado = _tipo == tipo;
-    return ChoiceChip(
-      selected: seleccionado,
-      onSelected: (_) {
-        setState(() {
-          _tipo = tipo;
-          _controladorValor.clear();
-          _controladorSistolica.clear();
-          _controladorDiastolica.clear();
-          _controladorFrecuenciaCardiaca.clear();
-          _controladorOtroNombre.clear();
-          _momento = null;
-        });
-      },
-      avatar: Icon(icono, size: 18, color: seleccionado ? Colors.white : const Color(0xFF0284C7)),
-      label: Text(etiqueta),
-      labelStyle: TextStyle(color: seleccionado ? Colors.white : const Color(0xFF0F172A), fontWeight: FontWeight.w600, fontSize: 13),
-      selectedColor: const Color(0xFF0284C7),
-      backgroundColor: Colors.white,
-      showCheckmark: false,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    );
+  void _cambiarTipo(String tipo) {
+    setState(() {
+      _tipo = tipo;
+      _controladorValor.clear();
+      _controladorObservaciones.clear();
+    });
   }
 
-  Widget _construirInputPrincipal(Color colorPrimario) {
-    return TextField(
-      controller: _controladorValor,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-      decoration: InputDecoration(
-        hintText: '118',
-        hintStyle: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 24, fontWeight: FontWeight.bold),
-        suffixText: _unidad,
-        suffixStyle: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w500, fontSize: 14),
-        prefixIcon: const Icon(Icons.water_drop, color: Color(0xFF0284C7)),
-        filled: true,
-        fillColor: const Color(0xFFF8FAFC),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade200)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: colorPrimario)),
+  Widget _construirInputUnico(Color colorTextoClaro) {
+    return Container(
+      decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('NIVEL DE ${_tituloMedicion.toUpperCase()}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colorTextoClaro, letterSpacing: 0.5)),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controladorValor,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                  decoration: const InputDecoration(hintText: 'Ej. 118', hintStyle: TextStyle(color: Color(0xFFCBD5E1), fontSize: 24, fontWeight: FontWeight.bold), border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 8)),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: _colorFondoHero, borderRadius: BorderRadius.circular(20)),
+                child: Text(_unidad, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _colorPrincipal)),
+              )
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _construirCamposPresion() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _controladorSistolica,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                decoration: InputDecoration(
-                  labelText: 'Sistolica', 
-                  hintText: '120', 
-                  suffixText: 'mmHg', 
-                  filled: true,
-                  fillColor: const Color(0xFFF8FAFC),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade200)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextField(
-                controller: _controladorDiastolica,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                decoration: InputDecoration(
-                  labelText: 'Diastolica', 
-                  hintText: '80', 
-                  suffixText: 'mmHg',
-                  filled: true,
-                  fillColor: const Color(0xFFF8FAFC),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade200)),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _controladorFrecuenciaCardiaca,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: 'Frecuencia cardiaca (opcional)', 
-            hintText: '74', 
-            suffixText: 'lpm',
-            filled: true,
-            fillColor: const Color(0xFFF8FAFC),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade200)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _construirCamposOtros() {
-    return Column(
-      children: [
-        TextField(
-          controller: _controladorOtroNombre, 
-          decoration: InputDecoration(
-            hintText: 'Ej. Temperatura',
-            filled: true,
-            fillColor: const Color(0xFFF8FAFC),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-          )
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _controladorValor, 
-          decoration: InputDecoration(
-            hintText: 'Ej. 36.5',
-            filled: true,
-            fillColor: const Color(0xFFF8FAFC),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-          )
-        ),
-      ],
-    );
-  }
-
   Future<void> _guardar() async {
-    String valor;
-    String nombreMostrar;
-    String? extra;
-
-    switch (_tipo) {
-      case 'glucosa':
-        valor = _controladorValor.text.trim();
-        nombreMostrar = 'Glucosa';
-        if (valor.isEmpty) { _mostrarError('Ingresa el valor de glucosa'); return; }
-        break;
-      case 'peso':
-        valor = _controladorValor.text.trim();
-        nombreMostrar = 'Peso';
-        if (valor.isEmpty) { _mostrarError('Ingresa el peso'); return; }
-        break;
-      case 'frecuencia':
-        valor = _controladorValor.text.trim();
-        nombreMostrar = 'Frecuencia cardiaca';
-        if (valor.isEmpty) { _mostrarError('Ingresa la frecuencia'); return; }
-        break;
-      case 'saturacion':
-        valor = _controladorValor.text.trim();
-        nombreMostrar = 'Saturacion O2';
-        if (valor.isEmpty) { _mostrarError('Ingresa la saturacion'); return; }
-        break;
-      case 'respiratoria':
-        valor = _controladorValor.text.trim();
-        nombreMostrar = 'Frec. respiratoria';
-        if (valor.isEmpty) { _mostrarError('Ingresa la frecuencia respiratoria'); return; }
-        break;
-      case 'presion':
-        final sys = _controladorSistolica.text.trim();
-        final dia = _controladorDiastolica.text.trim();
-        if (sys.isEmpty || dia.isEmpty) { _mostrarError('Ingresa la presion sistolica y diastolica'); return; }
-        valor = '$sys/$dia';
-        nombreMostrar = 'Presion';
-        final hr = _controladorFrecuenciaCardiaca.text.trim();
-        if (hr.isNotEmpty) extra = 'Frecuencia cardiaca: $hr lpm';
-        break;
-      default:
-        final nombre = _controladorOtroNombre.text.trim();
-        valor = _controladorValor.text.trim();
-        if (nombre.isEmpty || valor.isEmpty) { _mostrarError('Completa el nombre y el valor'); return; }
-        nombreMostrar = nombre;
-        break;
-    }
+    final valor = _controladorValor.text.trim();
+    if (valor.isEmpty) { _mostrarError('Ingresa el valor de la medicion'); return; }
 
     final notasRaw = _controladorObservaciones.text.trim();
-    final partesNotas = <String>[];
-    if (_momento != null) partesNotas.add('Momento: $_momento');
-    if (extra != null) partesNotas.add(extra);
-    if (notasRaw.isNotEmpty) partesNotas.add(notasRaw);
-    final observaciones = partesNotas.isEmpty ? null : partesNotas.join(' - ');
+    final observaciones = notasRaw.isEmpty ? null : notasRaw;
 
     setState(() => _cargando = true);
-
     final url = Uri.parse('http://localhost:8080/api/seguimiento');
 
     try {
@@ -519,11 +322,11 @@ class _EstadoPantallaFormularioSeguimiento extends State<PantallaFormularioSegui
         body: jsonEncode({
           "pacienteId": RepositorioApp.instancia.idPacienteActual,
           "tipo": _tipo,
-          "nombreMostrar": nombreMostrar,
+          "nombreMostrar": _tituloMedicion,
           "valor": valor,
           "unidad": _unidad,
           "observaciones": observaciones,
-          "momento": _momento,
+          "momento": null,
         }),
       );
 
@@ -534,7 +337,6 @@ class _EstadoPantallaFormularioSeguimiento extends State<PantallaFormularioSegui
         _mostrarError('Error al guardar en el servidor');
       }
     } catch (e) {
-      debugPrint("Error: $e");
       _mostrarError('Error de conexion con el servidor');
     } finally {
       if (mounted) setState(() => _cargando = false);
@@ -543,5 +345,50 @@ class _EstadoPantallaFormularioSeguimiento extends State<PantallaFormularioSegui
 
   void _mostrarError(String mensaje) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensaje)));
+  }
+}
+
+class _BotonTipo extends StatelessWidget {
+  final String tipo;
+  final String etiqueta;
+  final IconData icono;
+  final String actual;
+  final Function(String) alCambiar;
+
+  const _BotonTipo({required this.tipo, required this.etiqueta, required this.icono, required this.actual, required this.alCambiar});
+
+  Color get _colorBoton {
+    switch (tipo) {
+      case 'glucosa': return const Color(0xFF0284C7);
+      case 'presion': return const Color(0xFFE11D48);
+      case 'peso': return const Color(0xFF16A34A);
+      case 'frecuencia': return const Color(0xFFD97706);
+      case 'temperatura': return const Color(0xFFB91C1C);
+      default: return const Color(0xFF64748B);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final seleccionado = tipo == actual;
+    return GestureDetector(
+      onTap: () => alCambiar(tipo),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: seleccionado ? _colorBoton : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: seleccionado ? _colorBoton : const Color(0xFFE2E8F0)),
+          boxShadow: seleccionado ? [BoxShadow(color: _colorBoton.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
+        ),
+        child: Column(
+          children: [
+            Icon(icono, color: seleccionado ? Colors.white : _colorBoton, size: 22),
+            const SizedBox(height: 6),
+            Text(etiqueta, textAlign: TextAlign.center, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: seleccionado ? Colors.white : const Color(0xFF0F172A))),
+          ],
+        ),
+      ),
+    );
   }
 }

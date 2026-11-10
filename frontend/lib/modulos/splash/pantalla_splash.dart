@@ -37,15 +37,11 @@ class _EstadoPantallaSplash extends State<PantallaSplash>
   }
 
   Future<void> _iniciar() async {
-    // Inicializamos el repositorio local
     await RepositorioApp.instancia.inicializar();
-    
-    // Esperamos un momento para que se aprecie la animación
     await Future.delayed(const Duration(milliseconds: 1500));
 
     if (!mounted) return;
 
-    // Vamos directo al Login, sin pasar por la bienvenida
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 500),
@@ -76,7 +72,6 @@ class _EstadoPantallaSplash extends State<PantallaSplash>
         ),
         child: Stack(
           children: [
-            // Círculo decorativo superior
             Positioned(
               top: -100,
               right: -80,
@@ -89,7 +84,6 @@ class _EstadoPantallaSplash extends State<PantallaSplash>
                 ),
               ),
             ),
-            // Círculo decorativo inferior
             Positioned(
               bottom: -120,
               left: -60,
@@ -102,7 +96,6 @@ class _EstadoPantallaSplash extends State<PantallaSplash>
                 ),
               ),
             ),
-            // Contenido
             Center(
               child: FadeTransition(
                 opacity: _desvanecimiento,
@@ -111,22 +104,23 @@ class _EstadoPantallaSplash extends State<PantallaSplash>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // AQUI VA TU NUEVO LOGO
                       Container(
-                        width: 110,
-                        height: 110,
+                        width: 160,
+                        height: 160,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.local_hospital,
                           color: Colors.white,
-                          size: 56,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            )
+                          ]
                         ),
+                        padding: const EdgeInsets.all(20),
+                        child: Image.asset('assets/logo.png', fit: BoxFit.contain),
                       ),
                       const SizedBox(height: 28),
                       const Text(

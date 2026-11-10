@@ -57,7 +57,6 @@ class _EstadoPantallaLogin extends State<PantallaLogin> {
         final String rol = data['rol'];
         final String nombre = data['nombre'];
         
-        // CAPTURAMOS EL ID (Si el backend no lo manda, usamos el 1 por defecto)
         final int idPerfil = data['idPerfil'] ?? 1; 
 
         if (rol == 'medico') {
@@ -77,11 +76,11 @@ class _EstadoPantallaLogin extends State<PantallaLogin> {
         }
       } else {
         final errorData = jsonDecode(response.body);
-        _mostrarMensaje(errorData['error'] ?? 'Error al iniciar sesión');
+        _mostrarMensaje(errorData['error'] ?? 'Error al iniciar sesion');
       }
     } catch (e) {
-      _mostrarMensaje('Error de conexión. ¿El backend está encendido?');
-      print("Error: $e");
+      _mostrarMensaje('Error de conexion. El backend esta encendido?');
+      debugPrint("Error: $e");
     } finally {
       if (mounted) setState(() => _cargando = false);
     }
@@ -107,27 +106,14 @@ class _EstadoPantallaLogin extends State<PantallaLogin> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 84,
-                    height: 84,
-                    decoration: BoxDecoration(
-                      gradient: AppGradients.ocean,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colores.primary.withValues(alpha: 0.25),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.local_hospital,
-                      size: 42,
-                      color: Colors.white,
-                    ),
+                  // LOGO AQUI
+                  Image.asset(
+                    'assets/logo.png',
+                    width: 120,
+                    height: 120,
+                    fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.lg),
 
                   Text(
                     'Mi Salud Oasis',
@@ -152,7 +138,7 @@ class _EstadoPantallaLogin extends State<PantallaLogin> {
                     controller: _nombreController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
-                      labelText: 'Correo electrónico',
+                      labelText: 'Correo electronico',
                       hintText: 'Ej. usuario@correo.com',
                       prefixIcon: Icon(Icons.person_outline),
                     ),
@@ -163,7 +149,7 @@ class _EstadoPantallaLogin extends State<PantallaLogin> {
                     controller: _contrasenaController,
                     obscureText: _ocultarContrasena,
                     decoration: InputDecoration(
-                      labelText: 'Contraseña',
+                      labelText: 'Contrasena',
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -191,7 +177,7 @@ class _EstadoPantallaLogin extends State<PantallaLogin> {
                               height: 24, 
                               child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                             )
-                          : const Text('Iniciar sesión'),
+                          : const Text('Iniciar sesion'),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -205,7 +191,7 @@ class _EstadoPantallaLogin extends State<PantallaLogin> {
                         ),
                       );
                     },
-                    child: const Text('¿No tienes cuenta? Regístrate'),
+                    child: const Text('No tienes cuenta? Registrate'),
                   ),
                 ],
               ),

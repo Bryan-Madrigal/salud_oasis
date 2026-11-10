@@ -14,6 +14,8 @@ dependencies:
   shared_preferences: ^2.3.2
   google_fonts: ^6.2.1
   http: ^1.2.1 
+  pdf: ^3.10.8
+  printing: ^5.11.1
 
 dev_dependencies:
   flutter_test:
@@ -21,4 +23,12 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
 flutter:
-  uses-material-design: true
+  uses-material-design: true 
+  assets:
+    - assets/logo.png
+    - assets/avatar_hombre.png
+    - assets/avatar_mujer.png
+    - assets/receta.png
+    - assets/avatar_medico.png
+    - assets/avatar_doctora.png
+    

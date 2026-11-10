@@ -13,7 +13,7 @@ public class RecetaDetalle {
 
     @ManyToOne
     @JoinColumn(name = "receta_id", nullable = false)
-    @JsonIgnore // Evita bucle infinito al enviar el JSON
+    @JsonIgnore
     private Receta receta;
 
     @Column(name = "nombre_medicamento")
@@ -22,6 +22,10 @@ public class RecetaDetalle {
     private String dosis;
     private String frecuencia;
     private String duracion;
+    
+    @Column(name = "via_administracion")
+    private String viaAdministracion; // NUEVO
+    private String cantidad; // NUEVO
 
     // Getters y Setters
     public Long getId() { return id; }
@@ -36,4 +40,8 @@ public class RecetaDetalle {
     public void setFrecuencia(String frecuencia) { this.frecuencia = frecuencia; }
     public String getDuracion() { return duracion; }
     public void setDuracion(String duracion) { this.duracion = duracion; }
+    public String getViaAdministracion() { return viaAdministracion; } // NUEVO
+    public void setViaAdministracion(String viaAdministracion) { this.viaAdministracion = viaAdministracion; } // NUEVO
+    public String getCantidad() { return cantidad; } // NUEVO
+    public void setCantidad(String cantidad) { this.cantidad = cantidad; } // NUEVO
 }

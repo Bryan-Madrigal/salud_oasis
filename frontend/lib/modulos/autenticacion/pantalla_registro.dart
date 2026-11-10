@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:convert'; // <-- NUEVO: Para manejar el JSON
-import 'package:http/http.dart' as http; // <-- NUEVO: Para hacer peticiones de red
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../../nucleo/tema/tema_app.dart';
 
 class PantallaRegistro extends StatefulWidget {
@@ -16,10 +16,9 @@ class _EstadoPantallaRegistro extends State<PantallaRegistro> {
   final _contrasenaController = TextEditingController();
   final _confirmarContrasenaController = TextEditingController();
 
-  // Eliminamos _rolSeleccionado porque el backend lo calculará
   bool _ocultarContrasena = true;
   bool _ocultarConfirmacion = true;
-  bool _cargando = false; // <-- NUEVO: Para el indicador de carga
+  bool _cargando = false;
 
   @override
   void dispose() {
@@ -44,14 +43,19 @@ class _EstadoPantallaRegistro extends State<PantallaRegistro> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(
-                Icons.local_hospital,
-                size: 56,
-                color: colores.primary,
+              // LOGO AQUI
+              Center(
+                child: Image.asset(
+                  'assets/logo.png',
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.contain,
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
+              
               Text(
-                'Únete a Mi Salud Oasis',
+                'Unete a Mi Salud Oasis',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 24,
@@ -68,8 +72,6 @@ class _EstadoPantallaRegistro extends State<PantallaRegistro> {
               ),
               const SizedBox(height: AppSpacing.xxl),
 
-              // ELIMINADO: El SegmentedButton (Selector de Paciente/Médico)
-
               TextField(
                 controller: _nombreController,
                 textCapitalization: TextCapitalization.words,
@@ -84,7 +86,7 @@ class _EstadoPantallaRegistro extends State<PantallaRegistro> {
                 controller: _correoController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
-                  labelText: 'Correo electrónico',
+                  labelText: 'Correo electronico',
                   prefixIcon: Icon(Icons.email_outlined),
                 ),
               ),
@@ -94,7 +96,7 @@ class _EstadoPantallaRegistro extends State<PantallaRegistro> {
                 controller: _contrasenaController,
                 obscureText: _ocultarContrasena,
                 decoration: InputDecoration(
-                  labelText: 'Contraseña',
+                  labelText: 'Contrasena',
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(_ocultarContrasena
@@ -112,7 +114,7 @@ class _EstadoPantallaRegistro extends State<PantallaRegistro> {
                 controller: _confirmarContrasenaController,
                 obscureText: _ocultarConfirmacion,
                 decoration: InputDecoration(
-                  labelText: 'Confirmar contraseña',
+                  labelText: 'Confirmar contrasena',
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(_ocultarConfirmacion
@@ -129,8 +131,7 @@ class _EstadoPantallaRegistro extends State<PantallaRegistro> {
               SizedBox(
                 height: 52,
                 child: FilledButton(
-                  // Desactivamos el botón si está cargando
-                  onPressed: _cargando ? null : _registrar, 
+                  onPressed: _cargando ? null : _registrar,
                   child: _cargando
                       ? const SizedBox(
                           width: 24,
@@ -147,7 +148,7 @@ class _EstadoPantallaRegistro extends State<PantallaRegistro> {
 
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('¿Ya tienes cuenta? Inicia sesión'),
+                child: const Text('Ya tienes cuenta? Inicia sesion'),
               ),
             ],
           ),
@@ -156,32 +157,27 @@ class _EstadoPantallaRegistro extends State<PantallaRegistro> {
     );
   }
 
-  // Agregamos 'Future' y 'async' porque ahora haremos una petición de red
   Future<void> _registrar() async {
     final nombre = _nombreController.text.trim();
     final correo = _correoController.text.trim();
     final contrasena = _contrasenaController.text;
     final confirmacion = _confirmarContrasenaController.text;
 
-    // Validaciones del frontend (tus validaciones originales)
     if (nombre.isEmpty || correo.isEmpty || contrasena.isEmpty) {
       _mostrarMensaje('Por favor completa todos los campos');
       return;
     }
     if (contrasena.length < 6) {
-      _mostrarMensaje('La contraseña debe tener al menos 6 caracteres');
+      _mostrarMensaje('La contrasena debe tener al menos 6 caracteres');
       return;
     }
     if (contrasena != confirmacion) {
-      _mostrarMensaje('Las contraseñas no coinciden');
+      _mostrarMensaje('Las contrasenas no coinciden');
       return;
     }
 
     setState(() => _cargando = true);
 
-    // ⚠️ IMPORTANTE: 
-    // En Emulador Android usa 'http://10.0.2.2:8080/api/auth/registro'
-    // En Flutter Web usa 'http://localhost:8080/api/auth/registro'
     final url = Uri.parse('http://localhost:8080/api/auth/registro');
 
     try {
@@ -198,17 +194,15 @@ class _EstadoPantallaRegistro extends State<PantallaRegistro> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        // Registro exitoso
-        _mostrarMensaje('¡Registro exitoso! Ya puedes iniciar sesión');
-        Navigator.pop(context); // Regresa a la pantalla de Login
+        _mostrarMensaje('Registro exitoso! Ya puedes iniciar sesion');
+        Navigator.pop(context); 
       } else {
-        // Error del backend (ej. correo duplicado)
         final errorData = jsonDecode(response.body);
         _mostrarMensaje(errorData['error'] ?? 'Error al registrarse');
       }
     } catch (e) {
-      _mostrarMensaje('Error de conexión. Revisa si el servidor está encendido.');
-      print("Error: $e");
+      _mostrarMensaje('Error de conexion. Revisa si el servidor esta encendido.');
+      debugPrint("Error: $e");
     } finally {
       if (mounted) setState(() => _cargando = false);
     }

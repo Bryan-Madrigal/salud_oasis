@@ -23,49 +23,46 @@ public class MedicamentoController {
 
     @Autowired
     private MedicamentoRepository medicamentoRepository;
-    
     @Autowired
     private HistorialTomaRepository historialTomaRepository;
-    
     @Autowired
     private HorarioMedicamentoRepository horarioMedicamentoRepository;
-    
     @Autowired
     private PacienteRepository pacienteRepository;
 
-    // 1. Obtener todos los medicamentos de un paciente
     @GetMapping("/paciente/{pacienteId}")
     public List<Medicamento> verMedicamentosPaciente(@PathVariable Long pacienteId) {
         return medicamentoRepository.findByPacienteId(pacienteId);
     }
 
-    // 2. Registrar que el paciente tomó el medicamento
+    // RUTA ACTUALIZADA PARA EL FLUJO DE 4 PASOS
     @PostMapping("/{medicamentoId}/tomar")
-    public ResponseEntity<?> registrarToma(@PathVariable Long medicamentoId, @RequestBody Map<String, String> body) {
+    public ResponseEntity<?> registrarToma(@PathVariable Long medicamentoId, @RequestBody Map<String, Object> body) {
         Optional<Medicamento> medOpt = medicamentoRepository.findById(medicamentoId);
-        if (medOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        if (medOpt.isEmpty()) return ResponseEntity.notFound().build();
 
         HistorialToma toma = new HistorialToma();
         toma.setMedicamento(medOpt.get());
-        toma.setFechaProgramada(LocalDate.parse(body.get("fecha")));
-        toma.setHoraProgramada(body.get("hora"));
-        toma.setEstado("tomada");
+        toma.setFechaProgramada(LocalDate.parse(body.get("fecha").toString()));
+        toma.setHoraProgramada(body.get("hora").toString());
+        toma.setEstado(body.get("estado").toString()); 
+        
+        if (body.get("motivoOmision") != null) {
+            toma.setMotivoOmision(body.get("motivoOmision").toString());
+        }
+        if (body.get("observaciones") != null) {
+            toma.setObservaciones(body.get("observaciones").toString());
+        }
 
         return ResponseEntity.ok(historialTomaRepository.save(toma));
     }
 
-    // 3. Médico receta un nuevo medicamento
     @PostMapping
     public ResponseEntity<?> recetarMedicamento(@RequestBody Map<String, Object> body) {
         try {
             Long pacienteId = Long.parseLong(body.get("pacienteId").toString());
             Optional<Paciente> pacienteOpt = pacienteRepository.findById(pacienteId);
-            
-            if (pacienteOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Paciente no encontrado"));
-            }
+            if (pacienteOpt.isEmpty()) return ResponseEntity.badRequest().body(Map.of("error", "Paciente no encontrado"));
 
             Medicamento med = new Medicamento();
             med.setPaciente(pacienteOpt.get());
@@ -77,10 +74,8 @@ public class MedicamentoController {
             med.setNotas((String) body.get("notas"));
             med.setEstado("activo");
 
-            // Guardamos el medicamento primero para que genere su ID
             Medicamento medGuardado = medicamentoRepository.save(med);
 
-            // Si el médico puso una hora, creamos el horario
             if (body.get("horaRecordatorio") != null) {
                 HorarioMedicamento horario = new HorarioMedicamento();
                 horario.setMedicamento(medGuardado);
@@ -89,7 +84,6 @@ public class MedicamentoController {
             }
 
             return ResponseEntity.ok(medGuardado);
-            
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }

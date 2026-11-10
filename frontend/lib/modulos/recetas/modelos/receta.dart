@@ -5,6 +5,10 @@ class Receta {
   final DateTime fecha;
   final List<ItemReceta> items;
   final String? notas;
+  final int? edad;
+  final String? peso;
+  final String? altura;
+  final String? diagnostico; // NUEVO
 
   const Receta({
     required this.id,
@@ -13,6 +17,10 @@ class Receta {
     required this.fecha,
     required this.items,
     this.notas,
+    this.edad,
+    this.peso,
+    this.altura,
+    this.diagnostico,
   });
 
   String get idFormateado => '#${id.padLeft(6, '0')}';
@@ -21,7 +29,6 @@ class Receta {
     return '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
   }
 
-  // Mantenemos toJson por si el RepositorioApp lo sigue usando para guardar local
   Map<String, dynamic> toJson() => {
         'id': id,
         'nombrePaciente': nombrePaciente,
@@ -29,6 +36,10 @@ class Receta {
         'fecha': fecha.toIso8601String(),
         'items': items.map((i) => i.toJson()).toList(),
         'notas': notas,
+        'edad': edad,
+        'peso': peso,
+        'altura': altura,
+        'diagnostico': diagnostico,
       };
 
   factory Receta.fromJson(Map<String, dynamic> json) {
@@ -57,6 +68,10 @@ class Receta {
           .map((d) => ItemReceta.fromJson(d))
           .toList(),
       notas: json['notas'] as String?,
+      edad: json['edad'] as int?,
+      peso: json['peso'] as String?,
+      altura: json['altura'] as String?,
+      diagnostico: json['diagnostico'] as String?,
     );
   }
 }
@@ -66,12 +81,16 @@ class ItemReceta {
   final String dosis;
   final String frecuencia;
   final String duracion;
+  final String? viaAdministracion; // NUEVO
+  final String? cantidad; // NUEVO
 
   const ItemReceta({
     required this.nombreMedicamento,
     required this.dosis,
     required this.frecuencia,
     required this.duracion,
+    this.viaAdministracion,
+    this.cantidad,
   });
 
   Map<String, dynamic> toJson() => {
@@ -79,6 +98,8 @@ class ItemReceta {
         'dosis': dosis,
         'frecuencia': frecuencia,
         'duracion': duracion,
+        'viaAdministracion': viaAdministracion,
+        'cantidad': cantidad,
       };
 
   factory ItemReceta.fromJson(Map<String, dynamic> json) {
@@ -87,6 +108,8 @@ class ItemReceta {
       dosis: json['dosis'] ?? '',
       frecuencia: json['frecuencia'] ?? '',
       duracion: json['duracion'] ?? '',
+      viaAdministracion: json['viaAdministracion'] as String?,
+      cantidad: json['cantidad'] as String?,
     );
   }
 }
