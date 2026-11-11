@@ -9,7 +9,8 @@ import '../seguimiento/modelos/registro_seguimiento.dart';
 import '../citas/pantalla_citas_paciente.dart';
 import '../medicamentos/pantalla_medicamentos.dart';
 import '../recetas/pantalla_recetas_paciente.dart';
-import '../notificaciones/pantalla_notificaciones.dart';
+// CORRECCIÓN 1: Importamos la pantalla del PACIENTE (ya estaba bien, pero nos aseguramos)
+import '../notificaciones/pantalla_notificaciones_paciente.dart';
 import '../configuracion/pantalla_configuracion.dart';
 import '../autenticacion/pantalla_login.dart';
 
@@ -41,7 +42,8 @@ class _EstadoPantallaInicioPaciente extends State<PantallaInicioPaciente> {
   bool _esAncho(BuildContext context) => MediaQuery.of(context).size.width >= 700;
 
   void _abrirNotificaciones() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const PantallaNotificaciones()));
+    // CORRECCIÓN 2: Llamamos a la clase del PACIENTE
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const PantallaNotificacionesPaciente()));
   }
 
   void _abrirConfiguracion() {
@@ -57,8 +59,8 @@ class _EstadoPantallaInicioPaciente extends State<PantallaInicioPaciente> {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cerrar sesion'),
-        content: const Text('Seguro que deseas cerrar sesion?'),
+        title: const Text('Cerrar sesión'),
+        content: const Text('Seguro que deseas cerrar sesión?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
           FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Cerrar sesion')),

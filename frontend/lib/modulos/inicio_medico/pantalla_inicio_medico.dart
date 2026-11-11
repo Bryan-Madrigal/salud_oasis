@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../nucleo/datos/repositorio_app.dart';
-import '../../nucleo/tema/tema_app.dart'; // Asegúrate de que AppSpacing esté aquí
+import '../../nucleo/tema/tema_app.dart'; 
 import '../pacientes/pantalla_lista_pacientes.dart';
 import '../expediente/pantalla_expedientes_medico.dart';
 import '../recetas/pantalla_recetas_medico.dart';
 import '../citas/pantalla_citas_medico.dart';
 import '../reportes/pantalla_reportes.dart';
-import '../notificaciones/pantalla_notificaciones.dart';
+// CORRECCIÓN 1: Importamos la pantalla del MÉDICO
+import '../notificaciones/pantalla_notificaciones_medico.dart'; 
 import '../configuracion/pantalla_configuracion.dart';
 import '../autenticacion/pantalla_login.dart';
 
@@ -40,7 +41,8 @@ class _EstadoPantallaInicioMedico extends State<PantallaInicioMedico> {
   bool _esAncho(BuildContext context) => MediaQuery.of(context).size.width >= 800;
 
   void _abrirNotificaciones() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const PantallaNotificaciones()));
+    // CORRECCIÓN 2: Llamamos a la clase del MÉDICO
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const PantallaNotificacionesMedico()));
   }
 
   void _abrirConfiguracion() {

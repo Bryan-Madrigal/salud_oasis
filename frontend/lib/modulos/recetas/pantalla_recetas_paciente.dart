@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../nucleo/datos/repositorio_app.dart';
-import '../../nucleo/tema/tema_app.dart';
 import 'modelos/receta.dart';
 import 'pantalla_detalle_receta.dart';
 
@@ -42,84 +41,124 @@ class _EstadoPantallaRecetasPaciente extends State<PantallaRecetasPaciente> {
 
   @override
   Widget build(BuildContext context) {
-    final colores = context.colors;
-
     if (_cargando) return const Center(child: CircularProgressIndicator());
 
-    return RefreshIndicator(
-      onRefresh: _cargarRecetas,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Mis recetas', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colores.textPrimary, letterSpacing: -0.3)),
-            const SizedBox(height: AppSpacing.xs),
-            Text('Historial de recetas medicas', style: TextStyle(color: colores.textSecondary)),
-            const SizedBox(height: AppSpacing.xl),
+    // ORDENAMOS LAS RECETAS (De la más reciente a la más antigua)
+    final recetasOrdenadas = List<Receta>.from(_recetas)
+      ..sort((a, b) => b.id.compareTo(a.id));
 
-            if (_recetas.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40),
-                child: Center(child: Text('Aun no tienes recetas', style: TextStyle(color: colores.textSecondary))),
-              )
-            else
-              for (final receta in _recetas) _TarjetaReceta(receta: receta),
-          ],
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ENCABEZADO
+              const Text(
+                'Mis recetas',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Historial de recetas médicas',
+                style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+              ),
+              const SizedBox(height: 24),
+
+              // LISTA DE RECETAS
+              Expanded(
+                child: recetasOrdenadas.isEmpty
+                    ? const Center(child: Text('No tienes recetas registradas', style: TextStyle(color: Colors.grey)))
+                    : ListView.builder(
+                        itemCount: recetasOrdenadas.length,
+                        itemBuilder: (context, index) {
+                          final receta = recetasOrdenadas[index];
+                          return _TarjetaRecetaPaciente(receta: receta);
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _TarjetaReceta extends StatelessWidget {
+// ==========================================
+// WIDGET DE LA TARJETA
+// ==========================================
+class _TarjetaRecetaPaciente extends StatelessWidget {
   final Receta receta;
-
-  const _TarjetaReceta({required this.receta});
+  const _TarjetaRecetaPaciente({required this.receta});
 
   @override
   Widget build(BuildContext context) {
-    final colores = context.colors;
-    final cantidad = receta.items.length;
-    final textoMedicamentos = cantidad == 1
-        ? receta.items.first.nombreMedicamento
-        : '${receta.items.first.nombreMedicamento} + ${cantidad - 1} mas';
-
     return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
       child: Material(
-        color: colores.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(16),
+          // CLIC PARA ABRIR EL DETALLE
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => PantallaDetalleReceta(receta: receta)));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PantallaDetalleReceta(receta: receta),
+              ),
+            );
           },
-          child: Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.lg), boxShadow: colores.shadowSoft),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
+                // Icono de la receta
                 Container(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(color: colores.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(AppRadius.md)),
-                  child: Icon(Icons.description_outlined, color: colores.primary, size: 22),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0F2FE), // Azul claro
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.receipt_long, color: Color(0xFF0284C7)),
                 ),
-                const SizedBox(width: AppSpacing.lg),
+                const SizedBox(width: 16),
+                
+                // Información de la receta
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Receta ${receta.idFormateado}', style: TextStyle(fontWeight: FontWeight.w600, color: colores.textPrimary, fontSize: 15)),
-                      const SizedBox(height: 2),
-                      Text(textoMedicamentos, style: TextStyle(color: colores.textSecondary, fontSize: 13)),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text('${receta.nombreMedico} - ${receta.fechaFormateada}', style: TextStyle(color: colores.textTertiary, fontSize: 12)),
+                      Text(
+                        'Receta ${receta.idFormateado}',
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        receta.items.isNotEmpty ? receta.items.first.nombreMedicamento : 'Medicamento',
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      // AQUI ESTA LA CORRECCION (Se quitó el ?? 'Médico')
+                      Text(
+                        'Dr. ${receta.nombreMedico} - ${receta.fechaFormateada}',
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                      ),
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_right, color: colores.textTertiary),
+                
+                // Flechita a la derecha
+                const Icon(Icons.chevron_right, color: Color(0xFF94A3B8)),
               ],
             ),
           ),

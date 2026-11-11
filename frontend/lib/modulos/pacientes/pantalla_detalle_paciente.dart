@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../nucleo/tema/tema_app.dart';
 import '../recetas/pantalla_formulario_receta.dart';
+import '../recetas/pantalla_detalle_receta.dart'; // <-- IMPORTANTE: Importación agregada
 import '../recetas/modelos/receta.dart'; 
 import '../seguimiento/modelos/registro_seguimiento.dart';
 import '../seguimiento/widgets/grafica_evolucion.dart';
@@ -165,6 +166,7 @@ class _EstadoPantallaDetallePaciente extends State<PantallaDetallePaciente> with
     final colores = context.colors;
     if (_seguimiento.isEmpty) return Center(child: Text('Sin registros de seguimiento', style: TextStyle(color: colores.textSecondary)));
 
+    // SOLO SE MUESTRA LA GRÁFICA (Se eliminó el historial de registros)
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.xl),
       children: [
@@ -189,36 +191,18 @@ class _EstadoPantallaDetallePaciente extends State<PantallaDetallePaciente> with
             ],
           ),
         ),
-        const SizedBox(height: 24),
-        const Text('Historial de registros', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        ..._seguimiento.map((r) => Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: colores.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: colores.divider)),
-          child: Row(
-            children: [
-              Icon(Icons.analytics_outlined, color: colores.primary),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(r.nombreMostrar, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text('${r.fechaFormateada} - ${r.horaFormateada}', style: TextStyle(fontSize: 12, color: colores.textSecondary)),
-                  ],
-                ),
-              ),
-              Text('${r.valor} ${r.unidad}', style: const TextStyle(fontWeight: FontWeight.bold)),
-            ],
-          ),
-        )).toList(),
       ],
     );
   }
 
   Widget _construirRecetas(BuildContext context) {
     final colores = context.colors;
+
+    // 1. ORDENAR LAS RECETAS DE LA MÁS RECIENTE A LA MÁS ANTIGUA
+    // (Asumiendo que el ID es numérico y autoincremental en tu backend)
+    final recetasOrdenadas = List<Receta>.from(_recetas)
+      ..sort((a, b) => b.id.compareTo(a.id));
+
     return Column(
       children: [
         Padding(
@@ -235,19 +219,32 @@ class _EstadoPantallaDetallePaciente extends State<PantallaDetallePaciente> with
           ),
         ),
         Expanded(
-          child: _recetas.isEmpty 
+          child: recetasOrdenadas.isEmpty 
             ? Center(child: Text('Sin recetas para este paciente', style: TextStyle(color: colores.textSecondary)))
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                itemCount: _recetas.length,
+                itemCount: recetasOrdenadas.length,
                 itemBuilder: (context, i) {
-                  final r = _recetas[i];
+                  final r = recetasOrdenadas[i];
                   return Card(
                     margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                    clipBehavior: Clip.antiAlias, // Para que el efecto de clic respete los bordes
                     child: ListTile(
+                      // 2. HACER CLIC PARA VER EL DETALLE
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PantallaDetalleReceta(
+                              receta: r, // Pásale el objeto completo
+                            ),
+                          ),
+                        );
+                      },
                       leading: Icon(Icons.receipt_long, color: colores.primary),
-                      title: Text('Receta ${r.idFormateado}'),
+                      title: Text('Receta ${r.idFormateado}', style: const TextStyle(fontWeight: FontWeight.w600)),
                       subtitle: Text('${r.fechaFormateada} - ${r.items.length} medicamentos'),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey), // Flechita
                     ),
                   );
                 },
@@ -398,7 +395,7 @@ class TarjetaAntecedentesPublica extends StatelessWidget {
   final List<String> enfermedades;
   final List<String> alergias;
   final VoidCallback onEditar;
-  final bool puedeEditar; // <-- NUEVO PARAMETRO
+  final bool puedeEditar;
 
   const TarjetaAntecedentesPublica({
     super.key, 
@@ -439,7 +436,6 @@ class TarjetaAntecedentesPublica extends StatelessWidget {
           else
             ...alergias.map((a) => _itemAntecedente(a, 'Alergia detectada', esAlergia: true)),
 
-          // LOS BOTONES SOLO SE MUESTRAN SI PUEDE EDITAR
           if (puedeEditar) ...[
             const SizedBox(height: 32),
             _botonAgregar('AGREGAR ANTECEDENTES NO PATOLÓGICOS', onEditar),
